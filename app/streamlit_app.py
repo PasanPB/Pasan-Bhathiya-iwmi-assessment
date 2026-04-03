@@ -1,3 +1,9 @@
+import sys
+import os
+
+# 🔹 Fix import path (VERY IMPORTANT)
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import streamlit as st
 import torch
 import numpy as np
@@ -14,9 +20,12 @@ from src.model import ModelDevelopment
 def load_model():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = ModelDevelopment().get_model().to(device)
+
     model.load_state_dict(torch.load("models/best_model.pth", map_location=device))
     model.eval()
+
     return model, device
+
 
 model, device = load_model()
 
@@ -27,9 +36,14 @@ classes = ["with_mask", "without_mask"]
 # ------------------------
 def preprocess_image(image):
     image = np.array(image)
+
+    # Handle grayscale images
+    if len(image.shape) == 2:
+        image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+
     image = cv2.resize(image, (128, 128))
     image = image / 255.0
-    image = np.transpose(image, (2, 0, 1))
+    image = np.transpose(image, (2, 0, 1))  # HWC → CHW
     image = np.expand_dims(image, axis=0)
 
     tensor = torch.tensor(image, dtype=torch.float32).to(device)
@@ -50,36 +64,44 @@ def predict(image):
 # ------------------------
 # UI Layout
 # ------------------------
+st.set_page_config(page_title="Face Mask Detection", layout="centered")
+
 st.title("😷 Face Mask Detection App")
+st.write("Upload an image to detect whether the person is wearing a mask.")
 
 uploaded_file = st.file_uploader(
     "Upload an image", type=["jpg", "png", "jpeg"]
 )
 
 if uploaded_file is not None:
-    image = Image.open(uploaded_file)
+    try:
+        image = Image.open(uploaded_file)
 
-    st.image(image, caption="Uploaded Image", use_container_width=True)
+        st.image(image, caption="Uploaded Image", use_container_width=True)
 
-    probs = predict(image)
+        probs = predict(image)
 
-    pred_class = classes[np.argmax(probs)]
-    confidence = np.max(probs) * 100
+        pred_class = classes[np.argmax(probs)]
+        confidence = np.max(probs) * 100
 
-    st.subheader(f"Prediction: {pred_class}")
-    st.write(f"Confidence: {confidence:.2f}%")
+        # 🔥 Highlight result
+        st.success(f"Prediction: {pred_class}")
+        st.write(f"Confidence: {confidence:.2f}%")
 
-    # ------------------------
-    # Bar Chart (Top 3)
-    # ------------------------
-    st.subheader("Prediction Probabilities")
+        # ------------------------
+        # Bar Chart
+        # ------------------------
+        st.subheader("Prediction Probabilities")
 
-    fig, ax = plt.subplots()
-    ax.bar(classes, probs)
-    ax.set_ylabel("Probability")
-    ax.set_title("Class Probabilities")
+        fig, ax = plt.subplots()
+        ax.bar(classes, probs)
+        ax.set_ylabel("Probability")
+        ax.set_title("Class Probabilities")
 
-    st.pyplot(fig)
+        st.pyplot(fig)
+
+    except Exception as e:
+        st.error(f"Error processing image: {e}")
 
 # ------------------------
 # Sidebar
@@ -87,17 +109,21 @@ if uploaded_file is not None:
 st.sidebar.title("📊 Model Info")
 
 st.sidebar.markdown("""
-**Architecture:**
-- 3 Convolution Layers  
+### 🧠 Architecture
+- 3 Convolutional Layers  
 - Batch Normalization  
 - Max Pooling  
-- Dropout  
+- Dropout (0.5)  
 - Fully Connected Layers  
 
-**Training:**
+### ⚙️ Training
 - Optimizer: Adam  
-- Scheduler: StepLR  
+- Learning Rate Scheduler: StepLR  
 
-**Accuracy:**
-- ~90% (example, update after training)
+### 📈 Performance
+- Validation Accuracy: **(update this with your result)**  
+
+### 📌 Notes
+- Custom CNN built from scratch  
+- No pretrained models used  
 """)
