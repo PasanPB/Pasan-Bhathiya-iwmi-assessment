@@ -2,7 +2,9 @@ import sys
 import os
 
 # 🔹 Fix import path (VERY IMPORTANT)
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "best_model.pth")
+sys.path.append(PROJECT_ROOT)
 
 import streamlit as st
 import torch
@@ -21,13 +23,25 @@ def load_model():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = ModelDevelopment().get_model().to(device)
 
-    model.load_state_dict(torch.load("models/best_model.pth", map_location=device))
+    if not os.path.exists(MODEL_PATH):
+        raise FileNotFoundError(f"Model file not found at: {MODEL_PATH}")
+
+    model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
     model.eval()
 
     return model, device
 
 
-model, device = load_model()
+st.set_page_config(page_title="Face Mask Detection", layout="centered")
+
+try:
+    model, device = load_model()
+except FileNotFoundError:
+    st.title("Face Mask Detection App")
+    st.error("Model file is missing in deployment.")
+    st.info("Expected file path: models/best_model.pth")
+    st.info("Add that file to your GitHub repository and redeploy the app.")
+    st.stop()
 
 classes = ["with_mask", "without_mask"]
 
@@ -60,7 +74,6 @@ def predict(image):
 # ------------------------
 # UI Layout
 # ------------------------
-st.set_page_config(page_title="Face Mask Detection", layout="centered")
 
 st.title("😷 Face Mask Detection App")
 st.write("Upload an image to detect whether the person is wearing a mask.")
