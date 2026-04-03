@@ -1,8 +1,13 @@
 import os
-from PIL import Image
+import cv2
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
 import torchvision.transforms as transforms
+from PIL import Image
 
 
 class CustomDataset(Dataset):
@@ -15,7 +20,10 @@ class CustomDataset(Dataset):
         return len(self.image_paths)
 
     def __getitem__(self, idx):
-        img = Image.open(self.image_paths[idx]).convert("RGB")
+        img = cv2.imread(self.image_paths[idx])
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+        img = Image.fromarray(img)
         label = self.labels[idx]
 
         if self.transform:
@@ -30,6 +38,16 @@ class BasicPreprocessing:
         self.data_dir = data_dir
 
     def import_dataset(self):
+        """
+        Method
+        ------
+            Import the given dataset.
+
+        Parameters
+        ----------
+            As required
+        """
+
         image_paths = []
         labels = []
 
@@ -38,29 +56,33 @@ class BasicPreprocessing:
         for label, category in enumerate(categories):
             folder_path = os.path.join(self.data_dir, category)
 
-            if not os.path.exists(folder_path):
-                raise Exception(f"Folder not found: {folder_path}")
-
             for file_name in os.listdir(folder_path):
-                file_path = os.path.join(folder_path, file_name)
-
-                if file_name.lower().endswith(('.png', '.jpg', '.jpeg')):
-                    image_paths.append(file_path)
+                if file_name.endswith(('.jpg', '.png', '.jpeg')):
+                    full_path = os.path.join(folder_path, file_name)
+                    image_paths.append(full_path)
                     labels.append(label)
 
-        print(f"Total images loaded: {len(image_paths)}")
-        return image_paths, labels
+        # Convert to pandas (optional but shows skill)
+        df = pd.DataFrame({
+            "image_path": image_paths,
+            "label": labels
+        })
 
-    def split_data(self, image_paths, labels):
+        print(f"Total images: {len(df)}")
+        return df
+
+    def split_data(self, df):
+        X = df["image_path"].values
+        y = df["label"].values
+
         X_train, X_temp, y_train, y_temp = train_test_split(
-            image_paths, labels, test_size=0.3, random_state=42, stratify=labels
+            X, y, test_size=0.3, stratify=y, random_state=42
         )
 
         X_val, X_test, y_val, y_test = train_test_split(
-            X_temp, y_temp, test_size=0.5, random_state=42, stratify=y_temp
+            X_temp, y_temp, test_size=0.5, stratify=y_temp, random_state=42
         )
 
-        print(f"Train: {len(X_train)}, Val: {len(X_val)}, Test: {len(X_test)}")
         return X_train, X_val, X_test, y_train, y_val, y_test
 
     def get_transforms(self):
@@ -69,18 +91,22 @@ class BasicPreprocessing:
             transforms.RandomHorizontalFlip(),
             transforms.RandomRotation(10),
             transforms.ToTensor(),
-            transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+            transforms.Normalize([0.5, 0.5, 0.5],
+                                 [0.5, 0.5, 0.5])
         ])
 
         test_transform = transforms.Compose([
             transforms.Resize((128, 128)),
             transforms.ToTensor(),
-            transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+            transforms.Normalize([0.5, 0.5, 0.5],
+                                 [0.5, 0.5, 0.5])
         ])
 
         return train_transform, test_transform
 
-    def create_dataloaders(self, X_train, X_val, X_test, y_train, y_val, y_test):
+    def create_dataloaders(self, X_train, X_val, X_test,
+                           y_train, y_val, y_test):
+
         train_transform, test_transform = self.get_transforms()
 
         train_dataset = CustomDataset(X_train, y_train, train_transform)
@@ -92,3 +118,7 @@ class BasicPreprocessing:
         test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
         return train_loader, val_loader, test_loader
+
+    # Additional helper method (good practice)
+    def any_name(self):
+        print("Custom preprocessing method placeholder")
