@@ -7,8 +7,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import streamlit as st
 import torch
 import numpy as np
-import cv2
 from PIL import Image
+from PIL import ImageOps
 import matplotlib.pyplot as plt
 
 from src.model import ModelDevelopment
@@ -35,13 +35,9 @@ classes = ["with_mask", "without_mask"]
 # Preprocess Image
 # ------------------------
 def preprocess_image(image):
+    image = ImageOps.grayscale(image).convert("RGB") if image.mode != "RGB" else image
+    image = image.resize((128, 128))
     image = np.array(image)
-
-    # Handle grayscale images
-    if len(image.shape) == 2:
-        image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
-
-    image = cv2.resize(image, (128, 128))
     image = image / 255.0
     image = np.transpose(image, (2, 0, 1))  # HWC → CHW
     image = np.expand_dims(image, axis=0)
