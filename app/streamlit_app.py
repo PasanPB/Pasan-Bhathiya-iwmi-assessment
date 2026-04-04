@@ -34,7 +34,11 @@ def load_model():
 
 @st.cache_resource
 def get_achieved_test_accuracy(_model, _device):
-    prep = BasicPreprocessing(os.path.join(PROJECT_ROOT, "dataset"))
+    dataset_dir = os.path.join(PROJECT_ROOT, "dataset")
+    if not os.path.isdir(dataset_dir):
+        return None
+
+    prep = BasicPreprocessing(dataset_dir)
     image_paths, labels = prep.import_dataset()
     X_train, X_val, X_test, y_train, y_val, y_test = prep.split_data(image_paths, labels)
     _, _, test_loader = prep.create_dataloaders(
@@ -70,12 +74,19 @@ st.set_page_config(page_title="Face Mask Detection", layout="centered")
 # ------------------------
 try:
     model, device = load_model()
-    achieved_accuracy = get_achieved_test_accuracy(model, device)
 except Exception:
     st.title("Face Mask Detection App")
     st.error("❌ Model file missing or failed to load.")
     st.info("Make sure 'models/best_model.pth' exists.")
     st.stop()
+
+achieved_accuracy = None
+accuracy_note = ""
+try:
+    achieved_accuracy = get_achieved_test_accuracy(model, device)
+except Exception:
+    achieved_accuracy = None
+    accuracy_note = "Test dataset not available in deployment, so sidebar accuracy is hidden."
 
 classes = ["with_mask", "without_mask"]
 
@@ -211,3 +222,6 @@ st.sidebar.markdown(f"""
 - Custom CNN built from scratch  
 - No pretrained models used  
 """)
+
+if accuracy_note:
+    st.sidebar.caption(accuracy_note)
