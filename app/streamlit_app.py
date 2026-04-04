@@ -13,6 +13,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 
 from src.model import ModelDevelopment
+from src.preprocessing import BasicPreprocessing
 
 # ------------------------
 # Load Model
@@ -31,6 +32,34 @@ def load_model():
     return model, device
 
 
+@st.cache_resource
+def get_achieved_test_accuracy(_model, _device):
+    prep = BasicPreprocessing(os.path.join(PROJECT_ROOT, "dataset"))
+    image_paths, labels = prep.import_dataset()
+    X_train, X_val, X_test, y_train, y_val, y_test = prep.split_data(image_paths, labels)
+    _, _, test_loader = prep.create_dataloaders(
+        X_train, X_val, X_test, y_train, y_val, y_test
+    )
+
+    _model.eval()
+    correct = 0
+    total = 0
+
+    with torch.no_grad():
+        for images, labels_batch in test_loader:
+            images = images.to(_device)
+            labels_batch = labels_batch.to(_device)
+            outputs = _model(images)
+            _, predicted = torch.max(outputs, 1)
+            correct += (predicted == labels_batch).sum().item()
+            total += labels_batch.size(0)
+
+    if total == 0:
+        return None
+
+    return (correct / total) * 100
+
+
 # ------------------------
 # Page Config
 # ------------------------
@@ -41,6 +70,7 @@ st.set_page_config(page_title="Face Mask Detection", layout="centered")
 # ------------------------
 try:
     model, device = load_model()
+    achieved_accuracy = get_achieved_test_accuracy(model, device)
 except Exception:
     st.title("Face Mask Detection App")
     st.error("❌ Model file missing or failed to load.")
@@ -162,7 +192,7 @@ if uploaded_file is not None:
 # ------------------------
 st.sidebar.title("📊 Model Info")
 
-st.sidebar.markdown("""
+st.sidebar.markdown(f"""
 ### 🧠 Architecture
 - 3 Convolution Layers  
 - Batch Normalization  
@@ -175,7 +205,7 @@ st.sidebar.markdown("""
 - Learning Rate Scheduler: StepLR  
 
 ### 📈 Performance
-- Validation Accuracy: **(update this with your result)**  
+- Test Accuracy: **{f"{achieved_accuracy:.2f}%" if achieved_accuracy is not None else "N/A"}**  
 
 ### 📌 Notes
 - Custom CNN built from scratch  
