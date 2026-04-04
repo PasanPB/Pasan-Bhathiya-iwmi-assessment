@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import matplotlib.pyplot as plt
 import os
+from sklearn.metrics import confusion_matrix
 
 from src.model import ModelDevelopment
 from src.preprocessing import BasicPreprocessing
@@ -40,6 +41,7 @@ class Trainer:
         self.val_losses = []
         self.train_acc = []
         self.val_acc = []
+        self.class_names = ["with_mask", "without_mask"]
 
         # Ensure folders exist
         os.makedirs("models", exist_ok=True)
@@ -121,6 +123,7 @@ class Trainer:
 
         # After training
         self.plot_results()
+        self.evaluate_and_save_confusion_matrix()
 
     # 🔹 Plot Results
     def plot_results(self):
@@ -142,3 +145,43 @@ class Trainer:
 
         plt.savefig("results/training_curves.png")
         plt.close()
+
+    # 🔹 Evaluate on test set and save confusion matrix
+    def evaluate_and_save_confusion_matrix(self):
+        best_model_path = "models/best_model.pth"
+        if os.path.exists(best_model_path):
+            self.model.load_state_dict(torch.load(best_model_path, map_location=self.device))
+
+        self.model.eval()
+        y_true = []
+        y_pred = []
+
+        with torch.no_grad():
+            for images, labels in self.test_loader:
+                images, labels = images.to(self.device), labels.to(self.device)
+                outputs = self.model(images)
+                _, predicted = torch.max(outputs, 1)
+
+                y_true.extend(labels.cpu().numpy())
+                y_pred.extend(predicted.cpu().numpy())
+
+        cm = confusion_matrix(y_true, y_pred)
+
+        fig, ax = plt.subplots(figsize=(6, 5))
+        im = ax.imshow(cm, cmap="Blues")
+        ax.set_title("Confusion Matrix")
+        ax.set_xlabel("Predicted")
+        ax.set_ylabel("Actual")
+        ax.set_xticks(range(len(self.class_names)))
+        ax.set_yticks(range(len(self.class_names)))
+        ax.set_xticklabels(self.class_names)
+        ax.set_yticklabels(self.class_names)
+
+        for i in range(cm.shape[0]):
+            for j in range(cm.shape[1]):
+                ax.text(j, i, str(cm[i, j]), ha="center", va="center", color="black")
+
+        fig.colorbar(im, ax=ax)
+        fig.tight_layout()
+        fig.savefig("results/confusion_matrix.png")
+        plt.close(fig)
