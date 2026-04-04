@@ -74,6 +74,16 @@ def predict(image):
 
     return probs
 
+
+def classify_with_uncertainty(probs, class_names, threshold):
+    best_idx = int(np.argmax(probs))
+    best_prob = float(np.max(probs))
+
+    if best_prob < threshold:
+        return "uncertain", best_prob
+
+    return class_names[best_idx], best_prob
+
 # ------------------------
 # Chart
 # ------------------------
@@ -110,6 +120,15 @@ st.write("Upload an image to check if a person is wearing a mask.")
 st.markdown("### 📤 Upload Image")
 st.caption("Please upload a clear, zoomed image of a masked or unmasked person for accurate detection.")
 
+uncertainty_threshold = st.slider(
+    "Uncertainty threshold",
+    min_value=0.50,
+    max_value=0.95,
+    value=0.65,
+    step=0.01,
+    help="Predictions below this confidence are labeled as uncertain.",
+)
+
 uploaded_file = st.file_uploader("Upload image", type=["jpg", "png", "jpeg"])
 
 if uploaded_file is None:
@@ -120,10 +139,18 @@ if uploaded_file is not None:
         image = Image.open(uploaded_file)
         probs = predict(image)
 
-        pred_class = classes[np.argmax(probs)]
-        confidence = float(np.max(probs))
+        pred_class, confidence = classify_with_uncertainty(
+            probs,
+            classes,
+            uncertainty_threshold,
+        )
 
-        label = "Mask Detected" if pred_class == "with_mask" else "No Mask Detected"
+        if pred_class == "uncertain":
+            label = "Uncertain Prediction"
+        elif pred_class == "with_mask":
+            label = "Mask Detected"
+        else:
+            label = "No Mask Detected"
 
         col1, col2 = st.columns(2)
 
@@ -132,7 +159,10 @@ if uploaded_file is not None:
 
         with col2:
             st.subheader("Prediction")
-            st.success(label)
+            if pred_class == "uncertain":
+                st.warning(label)
+            else:
+                st.success(label)
 
             st.metric("Confidence", f"{confidence * 100:.2f}%")
 
