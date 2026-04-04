@@ -1,5 +1,6 @@
 import sys
 import os
+import json
 
 # 🔹 Fix import path
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -64,6 +65,19 @@ def get_achieved_test_accuracy(_model, _device):
     return (correct / total) * 100
 
 
+def load_saved_test_accuracy():
+    metrics_path = os.path.join(PROJECT_ROOT, "results", "metrics.json")
+    if not os.path.exists(metrics_path):
+        return None
+
+    try:
+        with open(metrics_path, "r", encoding="utf-8") as f:
+            metrics = json.load(f)
+        return float(metrics.get("test_accuracy"))
+    except Exception:
+        return None
+
+
 # ------------------------
 # Page Config
 # ------------------------
@@ -82,11 +96,15 @@ except Exception:
 
 achieved_accuracy = None
 accuracy_note = ""
-try:
-    achieved_accuracy = get_achieved_test_accuracy(model, device)
-except Exception:
-    achieved_accuracy = None
-    accuracy_note = "Test dataset not available in deployment, so sidebar accuracy is hidden."
+
+# Prefer persisted metric (deployment-safe), then fallback to live dataset evaluation.
+achieved_accuracy = load_saved_test_accuracy()
+if achieved_accuracy is None:
+    try:
+        achieved_accuracy = get_achieved_test_accuracy(model, device)
+    except Exception:
+        achieved_accuracy = None
+        accuracy_note = "No saved metrics file found and test dataset unavailable in deployment."
 
 classes = ["with_mask", "without_mask"]
 

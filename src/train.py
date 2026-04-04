@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import matplotlib.pyplot as plt
 import os
+import json
 from sklearn.metrics import confusion_matrix
 
 from src.model import ModelDevelopment
@@ -122,6 +123,7 @@ class Trainer:
                 print("✅ Best model saved!")
 
         # After training
+        self.best_val_acc = best_val_acc
         self.plot_results()
         self.evaluate_and_save_confusion_matrix()
 
@@ -165,6 +167,10 @@ class Trainer:
                 y_true.extend(labels.cpu().numpy())
                 y_pred.extend(predicted.cpu().numpy())
 
+        test_accuracy = 0.0
+        if len(y_true) > 0:
+            test_accuracy = (sum(int(a == b) for a, b in zip(y_true, y_pred)) / len(y_true)) * 100
+
         cm = confusion_matrix(y_true, y_pred)
 
         fig, ax = plt.subplots(figsize=(6, 5))
@@ -185,3 +191,10 @@ class Trainer:
         fig.tight_layout()
         fig.savefig("results/confusion_matrix.png")
         plt.close(fig)
+
+        metrics = {
+            "best_validation_accuracy": round(float(getattr(self, "best_val_acc", 0.0) * 100), 4),
+            "test_accuracy": round(float(test_accuracy), 4),
+        }
+        with open("results/metrics.json", "w", encoding="utf-8") as f:
+            json.dump(metrics, f, indent=2)
