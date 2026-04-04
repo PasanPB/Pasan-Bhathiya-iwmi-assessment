@@ -1,121 +1,20 @@
 # Face Mask Classification Project
 
-This project implements a complete end-to-end deep learning pipeline to classify images into:
+End-to-end computer vision project for classifying faces as:
 
 - with_mask
 - without_mask
 
-It includes data preprocessing, custom CNN model development, training with validation and checkpointing, evaluation helpers, and a Streamlit web app for interactive prediction.
+The repository includes data preprocessing, custom CNN model development, training and evaluation, and a Streamlit web application for interactive inference.
 
-## Key Features
+## Highlights
 
-- Custom CNN built from scratch using PyTorch (no pretrained backbone)
-- Class-based architecture for preprocessing, model development, and training
-- Train/validation/test split with image augmentation
-- Best model checkpoint saving during training
-- Training curve plot generation
-- Streamlit app for image upload and prediction
-- Visualization of top-k class confidence (top-3 requested, auto-fallback for 2-class model)
-
-## Assessment Task Compliance
-
-### Task 1 -> Data Preprocessing and Pipeline
-
-#### 1) Load and Split
-- [x] Dataset loading implemented using class-based preprocessing workflow.
-- [x] Required libraries imported:
-	- os
-	- cv2
-	- numpy
-	- pandas
-	- matplotlib
-- [x] Additional libraries used where needed (for splitting and loaders):
-	- sklearn.model_selection.train_test_split
-	- torch.utils.data.DataLoader, Dataset
-	- torchvision.transforms
-	- PIL.Image
-- [x] Training, validation, and test splits are created.
-- [x] DataLoaders are created for train/validation/test datasets.
-
-#### 2) Transformations
-- [x] Resizing applied (128 x 128).
-- [x] Normalization applied.
-- [x] Data augmentation applied for training:
-	- random horizontal flip
-	- random rotation
-- [x] Separate train and evaluation transforms are used.
-
-#### 3) Required Structure
-- [x] `BasicPreprocessing` class implemented.
-- [x] `__init__` implemented.
-- [x] `import_dataset` implemented.
-- [x] Additional preprocessing methods implemented (split_data, get_transforms, create_dataloaders, any_name).
-
-### Task 2 -> Custom Computer Vision Architecture and Training
-
-#### 1) Design from Scratch
-- [x] Custom CNN model built from scratch in `src/model.py`.
-- [x] No pretrained backbones used (no ResNet/VGG/YOLO pretrained models).
-
-#### 2) Required Layers
-- [x] Convolutional blocks included.
-- [x] Max pooling included.
-- [x] Batch normalization included.
-- [x] Dropout included.
-- [x] Fully connected layers included.
-
-#### 3) Training and Scheduling
-- [x] Optimizer implemented (Adam).
-- [x] Dynamic learning-rate scheduler implemented (StepLR).
-- [x] Per-epoch training/validation loss and accuracy logging implemented.
-
-#### 4) Deliverables
-- [x] Model definition file available: `src/model.py`.
-- [x] Training history plot generated: `results/training_curves.png`.
-
-### Task 3 -> Model Evaluation and Basic Inferencing
-
-#### 1) Metrics and Detection
-- [x] Static-image face detection implemented in `src/inference.py`.
-- [x] Haarcascade frontal-face detector used (`haarcascade_frontalface_default.xml`).
-- [x] Classification report generation implemented.
-- [x] Confusion matrix generation implemented and saved to `results/confusion_matrix.png`.
-
-#### 2) Analysis
-- [x] Brief model success/failure analysis documented in this README (Model Behavior Notes).
-
-#### 3) Required Structure
-- [x] `BasicInference` class implemented with `__init__`, `detect_images`, and helper methods.
-- [x] `main()` implemented with required assessment print statement.
-
-### Task 4 -> Streamlit Application
-
-#### 1) Interface
-- [x] Upload support for `.jpg`, `.png`, `.jpeg`.
-
-#### 2) Inference Display
-- [x] Uploaded image displayed.
-- [x] Predicted class displayed.
-- [x] Confidence percentage displayed.
-
-#### 3) Visualization
-- [x] Top-k prediction bar chart implemented with `top_k=3` request.
-- [x] Safe fallback to available class count (`min(3, number_of_classes)`) for the current 2-class model.
-
-#### 4) Info Sidebar
-- [x] Architecture summary included.
-- [x] Achieved accuracy shown as computed test accuracy from the saved model and current dataset split.
-
-#### 5) Deliverable Status
-- [x] Functional `app/streamlit_app.py` included.
-- [ ] Deployed URL or screen recording must be attached at submission time.
-
-### Version Control and Documentation (Mandatory)
-
-- [x] Git repository used with multiple descriptive commits.
-- [x] Comprehensive README included for reproducibility and maintenance.
-- [x] Python/model checkpoint-aware `.gitignore` included.
-- [x] Commit history available for reviewer inspection.
+- Custom CNN architecture built from scratch (no pretrained backbone)
+- Structured into dedicated classes for preprocessing, model development, training, and inference
+- Data augmentation and normalization pipeline
+- Training with Adam optimizer and StepLR scheduler
+- Saved best checkpoint and evaluation artifacts
+- Streamlit UI with image upload, prediction confidence, and top-k chart
 
 ## Project Structure
 
@@ -129,6 +28,9 @@ It includes data preprocessing, custom CNN model development, training with vali
 ├── models/
 │   └── best_model.pth
 ├── results/
+│   ├── training_curves.png
+│   ├── confusion_matrix.png
+│   └── metrics.json
 ├── src/
 │   ├── inference.py
 │   ├── model.py
@@ -143,48 +45,44 @@ It includes data preprocessing, custom CNN model development, training with vali
 └── README.md
 ```
 
-## Class-Based Design (Assessment Requirement)
+## Class Design
 
-The project follows the required class-based structure with separate classes for core sections.
+### 1) Preprocessing
+- File: `src/preprocessing.py`
+- Class: `BasicPreprocessing`
+- Key methods:
+  - `import_dataset`
+  - `split_data`
+  - `get_transforms`
+  - `create_dataloaders`
 
-1. Preprocessing section
-- Class: BasicPreprocessing
-- File: src/preprocessing.py
-- Responsibilities:
-	- import_dataset
-	- split_data
-	- get_transforms
-	- create_dataloaders
+### 2) Model Development
+- File: `src/model.py`
+- Class: `ModelDevelopment`
+- CNN model: `MaskCNN` (compatibility alias `MaskClassifier` is also available)
 
-2. Model section
-- Class: ModelDevelopment
-- File: src/model.py
-- Responsibilities:
-	- build_model
-	- get_model
+### 3) Training
+- File: `src/train.py`
+- Class: `Trainer`
+- Key methods:
+  - `train_one_epoch`
+  - `validate`
+  - `train`
+  - `plot_results`
+  - `evaluate_and_save_confusion_matrix`
 
-3. Training section
-- Class: Trainer
-- File: src/train.py
-- Responsibilities:
-	- train_one_epoch
-	- validate
-	- train
-	- plot_results
-	- evaluate_and_save_confusion_matrix
+### 4) Inferencing
+- File: `src/inference.py`
+- Class: `BasicInference`
+- Uses Haar cascade (`haarcascade_frontalface_default.xml`) to detect faces in static images.
 
-Additional class:
-- BasicInference in src/inference.py for image-level face detection and inference utilities.
-
-## Requirements
-
-Install dependencies:
+## Installation
 
 ```powershell
 pip install -r requirements.txt
 ```
 
-requirements.txt includes:
+Main dependencies:
 - numpy
 - pandas
 - matplotlib
@@ -211,9 +109,9 @@ source .venv/bin/activate
 export PYTHONPATH=.
 ```
 
-## Dataset Setup
+## Dataset Format
 
-Place dataset images in:
+Place images in:
 
 ```text
 dataset/
@@ -221,25 +119,23 @@ dataset/
 └── without_mask/
 ```
 
-Supported image formats: jpg, jpeg, png
+Supported file types: `.jpg`, `.jpeg`, `.png`.
 
-## Run Instructions
+## Run Commands
 
-### 1) Run preprocessing test
+### 1) Test preprocessing
 
 ```powershell
 $env:PYTHONPATH = "."
 python test/test_preprocessing.py
 ```
 
-### 2) Run model test
+### 2) Test model forward pass
 
 ```powershell
 $env:PYTHONPATH = "."
 python test/test_model.py
 ```
-
-This test imports `MaskClassifier` from `src/model.py` (kept for compatibility).
 
 ### 3) Train model
 
@@ -255,71 +151,57 @@ $env:PYTHONPATH = "."
 streamlit run app/streamlit_app.py
 ```
 
-## Training Details
+## Training and Evaluation Outputs
 
-- Input size: 128 x 128
-- Model: 3 convolution blocks + batch normalization + max pooling + dropout + FC layers
-- Loss: CrossEntropyLoss
-- Optimizer: Adam
-- Scheduler: StepLR (step_size=5, gamma=0.5)
-- Checkpoint: best validation accuracy model saved to models/best_model.pth
+After training, these artifacts are produced:
 
-## Streamlit App Details
+- `models/best_model.pth`
+- `results/training_curves.png`
+- `results/confusion_matrix.png`
+- `results/metrics.json`
 
-The web app provides:
+`results/metrics.json` stores persisted accuracy metrics used by Streamlit sidebar in deployment.
 
-- Image upload interface
-- Predicted class and confidence score
-- Confidence progress bar
-- Top predictions bar chart
+## Streamlit App Features
 
-Note on top-3 chart requirement:
-- Current model has 2 classes, so the app renders top-k with safe fallback: k = min(3, number_of_classes).
-- This means it still behaves correctly and displays all available classes.
+- Upload `.jpg`, `.jpeg`, `.png`
+- Displays uploaded image and predicted class
+- Shows confidence percentage and progress bar
+- Top-k probability bar chart (`top_k=3` request with safe fallback for 2-class model)
+- Sidebar with architecture summary and achieved accuracy
 
-## Outputs
+Deployment note:
+- In cloud deployments where `dataset/` is unavailable, sidebar accuracy is read from `results/metrics.json`.
+- If no metrics file exists, accuracy displays as `N/A`.
 
-After training, these artifacts are generated or updated:
+## Assessment Coverage Summary
 
-- models/best_model.pth
-- results/training_curves.png
-- results/confusion_matrix.png
+- Task 1 (Preprocessing pipeline): Completed
+- Task 2 (Custom architecture and training): Completed
+- Task 3 (Evaluation and inferencing): Completed
+- Task 4 (Streamlit app): Completed
+- Version control and documentation requirements: Completed
 
-`results/confusion_matrix.png` is now generated automatically at the end of training from test-set predictions.
+## Model Behavior Summary
 
-## Common Issues and Fixes
-
-1. Import errors for local modules
-- Ensure PYTHONPATH is set to project root before running scripts.
-
-2. Preprocessing split mismatch
-- `import_dataset()` returns `image_paths, labels` and `split_data()` supports both:
-	- `split_data(image_paths, labels)`
-	- `split_data(df)`
-
-3. Streamlit model load error
-- Confirm models/best_model.pth exists.
-
-4. OpenCV GUI errors in cloud/deployment
-- Use opencv-python-headless (already in requirements).
-
-## Model Behavior Notes
-
-Model tends to perform better on:
-- clear and front-facing faces
-- proper lighting
+Model performs better on:
+- front-facing faces
+- well-lit images
 - standard mask usage
 
-Model may struggle with:
-- low light or shadows
-- partial face occlusion
-- incorrect mask wearing styles
-- non-standard masks (scarf, transparent mask, etc.)
-- extreme side profile angles
+Model is weaker on:
+- low-light or shadowed images
+- partial occlusions
+- improper/non-standard mask wearing
+- extreme head angles
+
+## Known Notes
+
+- `test/test_model.py` imports `MaskClassifier`; this is supported through compatibility aliasing in `src/model.py`.
+- `split_data()` supports both `split_data(image_paths, labels)` and `split_data(df)` usage patterns.
 
 ## Future Improvements
 
-- Add threshold-based uncertain label in app for low-confidence predictions
-- Expand dataset for difficult real-world cases
-- Add per-class metrics and confusion matrix to training report
-- Add automated test pipeline in CI
+- Add uncertainty thresholding in Streamlit for low-confidence predictions
+- Expand dataset diversity for difficult real-world conditions
+- Add CI pipeline for automated testing and linting
