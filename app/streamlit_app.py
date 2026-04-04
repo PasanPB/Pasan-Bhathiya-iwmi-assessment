@@ -43,8 +43,8 @@ try:
     model, device = load_model()
 except Exception:
     st.title("Face Mask Detection App")
-    st.error("Model file missing or failed to load.")
-    st.info("Make sure models/best_model.pth exists.")
+    st.error("❌ Model file missing or failed to load.")
+    st.info("Make sure 'models/best_model.pth' exists.")
     st.stop()
 
 classes = ["with_mask", "without_mask"]
@@ -96,6 +96,10 @@ def draw_probability_chart(probs):
 st.title("😷 Face Mask Detection")
 st.write("Upload an image to check if a person is wearing a mask.")
 
+# 🔥 Instruction (your requirement)
+st.markdown("### 📤 Upload Image")
+st.caption("Please upload a clear, zoomed image of a masked or unmasked person for accurate detection.")
+
 uploaded_file = st.file_uploader("Upload image", type=["jpg", "png", "jpeg"])
 
 if uploaded_file is None:
@@ -134,24 +138,24 @@ if uploaded_file is not None:
 # ------------------------
 # Sidebar
 # ------------------------
-st.sidebar.title("Model Info")
+st.sidebar.title("📊 Model Info")
 
 st.sidebar.markdown("""
-### Architecture
+### 🧠 Architecture
 - 3 Convolution Layers  
 - Batch Normalization  
 - Max Pooling  
-- Dropout  
+- Dropout (0.5)  
 - Fully Connected Layers  
 
-### Training
+### ⚙️ Training
 - Optimizer: Adam  
-- Scheduler: StepLR  
+- Learning Rate Scheduler: StepLR  
 
-### Performance
-- Validation Accuracy: **(update this)**  
+### 📈 Performance
+- Validation Accuracy: **(update this with your result)**  
 
-### Notes
-- Custom CNN  
-- No pretrained models  
+### 📌 Notes
+- Custom CNN built from scratch  
+- No pretrained models used  
 """)
