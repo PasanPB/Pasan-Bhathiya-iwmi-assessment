@@ -17,6 +17,106 @@ It includes data preprocessing, custom CNN model development, training with vali
 - Streamlit app for image upload and prediction
 - Visualization of top-k class confidence (top-3 requested, auto-fallback for 2-class model)
 
+## Assessment Task Compliance
+
+### Task 1 -> Data Preprocessing and Pipeline
+
+#### 1) Load and Split
+- [x] Dataset loading implemented using class-based preprocessing workflow.
+- [x] Required libraries imported:
+	- os
+	- cv2
+	- numpy
+	- pandas
+	- matplotlib
+- [x] Additional libraries used where needed (for splitting and loaders):
+	- sklearn.model_selection.train_test_split
+	- torch.utils.data.DataLoader, Dataset
+	- torchvision.transforms
+	- PIL.Image
+- [x] Training, validation, and test splits are created.
+- [x] DataLoaders are created for train/validation/test datasets.
+
+#### 2) Transformations
+- [x] Resizing applied (128 x 128).
+- [x] Normalization applied.
+- [x] Data augmentation applied for training:
+	- random horizontal flip
+	- random rotation
+- [x] Separate train and evaluation transforms are used.
+
+#### 3) Required Structure
+- [x] `BasicPreprocessing` class implemented.
+- [x] `__init__` implemented.
+- [x] `import_dataset` implemented.
+- [x] Additional preprocessing methods implemented (split_data, get_transforms, create_dataloaders, any_name).
+
+### Task 2 -> Custom Computer Vision Architecture and Training
+
+#### 1) Design from Scratch
+- [x] Custom CNN model built from scratch in `src/model.py`.
+- [x] No pretrained backbones used (no ResNet/VGG/YOLO pretrained models).
+
+#### 2) Required Layers
+- [x] Convolutional blocks included.
+- [x] Max pooling included.
+- [x] Batch normalization included.
+- [x] Dropout included.
+- [x] Fully connected layers included.
+
+#### 3) Training and Scheduling
+- [x] Optimizer implemented (Adam).
+- [x] Dynamic learning-rate scheduler implemented (StepLR).
+- [x] Per-epoch training/validation loss and accuracy logging implemented.
+
+#### 4) Deliverables
+- [x] Model definition file available: `src/model.py`.
+- [x] Training history plot generated: `results/training_curves.png`.
+
+### Task 3 -> Model Evaluation and Basic Inferencing
+
+#### 1) Metrics and Detection
+- [x] Static-image face detection implemented in `src/inference.py`.
+- [x] Haarcascade frontal-face detector used (`haarcascade_frontalface_default.xml`).
+- [x] Classification report generation implemented.
+- [x] Confusion matrix generation implemented and saved to `results/confusion_matrix.png`.
+
+#### 2) Analysis
+- [x] Brief model success/failure analysis documented in this README (Model Behavior Notes).
+
+#### 3) Required Structure
+- [x] `BasicInference` class implemented with `__init__`, `detect_images`, and helper methods.
+- [x] `main()` implemented with required assessment print statement.
+
+### Task 4 -> Streamlit Application
+
+#### 1) Interface
+- [x] Upload support for `.jpg`, `.png`, `.jpeg`.
+
+#### 2) Inference Display
+- [x] Uploaded image displayed.
+- [x] Predicted class displayed.
+- [x] Confidence percentage displayed.
+
+#### 3) Visualization
+- [x] Top-k prediction bar chart implemented with `top_k=3` request.
+- [x] Safe fallback to available class count (`min(3, number_of_classes)`) for the current 2-class model.
+
+#### 4) Info Sidebar
+- [x] Architecture summary included.
+- [x] Achieved accuracy shown as computed test accuracy from the saved model and current dataset split.
+
+#### 5) Deliverable Status
+- [x] Functional `app/streamlit_app.py` included.
+- [ ] Deployed URL or screen recording must be attached at submission time.
+
+### Version Control and Documentation (Mandatory)
+
+- [x] Git repository used with multiple descriptive commits.
+- [x] Comprehensive README included for reproducibility and maintenance.
+- [x] Python/model checkpoint-aware `.gitignore` included.
+- [x] Commit history available for reviewer inspection.
+
 ## Project Structure
 
 ```text
