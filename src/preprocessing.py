@@ -62,18 +62,18 @@ class BasicPreprocessing:
                     image_paths.append(full_path)
                     labels.append(label)
 
-        # Convert to pandas (optional but shows skill)
-        df = pd.DataFrame({
-            "image_path": image_paths,
-            "label": labels
-        })
+        print(f"Total images: {len(image_paths)}")
+        return image_paths, labels
 
-        print(f"Total images: {len(df)}")
-        return df
-
-    def split_data(self, df):
-        X = df["image_path"].values
-        y = df["label"].values
+    def split_data(self, data, labels=None):
+        if labels is None:
+            # Supports current training flow: split_data(df)
+            X = data["image_path"].values
+            y = data["label"].values
+        else:
+            # Supports test flow: split_data(image_paths, labels)
+            X = np.array(data)
+            y = np.array(labels)
 
         X_train, X_temp, y_train, y_temp = train_test_split(
             X, y, test_size=0.3, stratify=y, random_state=42

@@ -28,8 +28,8 @@ class Trainer:
 
         # 🔹 Load Data
         prep = BasicPreprocessing(data_dir)
-        df = prep.import_dataset()
-        X_train, X_val, X_test, y_train, y_val, y_test = prep.split_data(df)
+        image_paths, labels = prep.import_dataset()
+        X_train, X_val, X_test, y_train, y_val, y_test = prep.split_data(image_paths, labels)
 
         self.train_loader, self.val_loader, self.test_loader = prep.create_dataloaders(
             X_train, X_val, X_test,

@@ -74,16 +74,6 @@ def predict(image):
 
     return probs
 
-
-def classify_with_uncertainty(probs, class_names, threshold):
-    best_idx = int(np.argmax(probs))
-    best_prob = float(np.max(probs))
-
-    if best_prob < threshold:
-        return "uncertain", best_prob
-
-    return class_names[best_idx], best_prob
-
 # ------------------------
 # Chart
 # ------------------------
@@ -91,14 +81,20 @@ def draw_probability_chart(probs, class_names, top_k=3):
     top_k = min(top_k, len(class_names))
     top_indices = np.argsort(probs)[::-1][:top_k]
 
-    top_labels = [class_names[i] for i in top_indices]
+    top_labels = [class_names[i].replace("_", " ").title() for i in top_indices]
     top_probs = probs[top_indices]
 
-    fig, ax = plt.subplots()
-    bars = ax.bar(top_labels, top_probs)
+    fig, ax = plt.subplots(figsize=(7, 4.2))
+    x_positions = np.arange(len(top_labels))
+    bars = ax.bar(x_positions, top_probs, width=0.58, color=["#0f8b72", "#f4a259", "#457b9d"][:len(top_labels)])
+
+    ax.set_xticks(x_positions)
+    ax.set_xticklabels(top_labels)
     ax.set_ylim(0, 1)
     ax.set_ylabel("Probability")
     ax.set_title(f"Top {top_k} Prediction Confidence")
+    ax.grid(axis="y", alpha=0.2)
+    ax.set_axisbelow(True)
 
     for bar, prob in zip(bars, top_probs):
         ax.text(
@@ -106,7 +102,11 @@ def draw_probability_chart(probs, class_names, top_k=3):
             prob + 0.02,
             f"{prob * 100:.1f}%",
             ha="center",
+            va="bottom",
+            fontsize=10,
         )
+
+    fig.tight_layout()
 
     return fig
 
@@ -120,15 +120,6 @@ st.write("Upload an image to check if a person is wearing a mask.")
 st.markdown("### 📤 Upload Image")
 st.caption("Please upload a clear, zoomed image of a masked or unmasked person for accurate detection.")
 
-uncertainty_threshold = st.slider(
-    "Uncertainty threshold",
-    min_value=0.50,
-    max_value=0.95,
-    value=0.65,
-    step=0.01,
-    help="Predictions below this confidence are labeled as uncertain.",
-)
-
 uploaded_file = st.file_uploader("Upload image", type=["jpg", "png", "jpeg"])
 
 if uploaded_file is None:
@@ -139,18 +130,10 @@ if uploaded_file is not None:
         image = Image.open(uploaded_file)
         probs = predict(image)
 
-        pred_class, confidence = classify_with_uncertainty(
-            probs,
-            classes,
-            uncertainty_threshold,
-        )
+        pred_class = classes[np.argmax(probs)]
+        confidence = float(np.max(probs))
 
-        if pred_class == "uncertain":
-            label = "Uncertain Prediction"
-        elif pred_class == "with_mask":
-            label = "Mask Detected"
-        else:
-            label = "No Mask Detected"
+        label = "Mask Detected" if pred_class == "with_mask" else "No Mask Detected"
 
         col1, col2 = st.columns(2)
 
@@ -159,10 +142,7 @@ if uploaded_file is not None:
 
         with col2:
             st.subheader("Prediction")
-            if pred_class == "uncertain":
-                st.warning(label)
-            else:
-                st.success(label)
+            st.success(label)
 
             st.metric("Confidence", f"{confidence * 100:.2f}%")
 
@@ -170,7 +150,7 @@ if uploaded_file is not None:
 
         st.write("")
         st.subheader("Top Predictions")
-        st.pyplot(draw_probability_chart(probs, classes, top_k=3))
+        st.pyplot(draw_probability_chart(probs, classes, top_k=3), use_container_width=True)
         if len(classes) < 3:
             st.caption("Top-3 view requested; only 2 classes are available in this model.")
 

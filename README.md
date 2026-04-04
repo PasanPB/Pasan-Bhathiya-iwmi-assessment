@@ -71,6 +71,7 @@ The project follows the required class-based structure with separate classes for
 	- validate
 	- train
 	- plot_results
+	- evaluate_and_save_confusion_matrix
 
 Additional class:
 - BasicInference in src/inference.py for image-level face detection and inference utilities.
@@ -138,6 +139,8 @@ $env:PYTHONPATH = "."
 python test/test_model.py
 ```
 
+This test imports `MaskClassifier` from `src/model.py` (kept for compatibility).
+
 ### 3) Train model
 
 ```powershell
@@ -180,20 +183,24 @@ After training, these artifacts are generated or updated:
 
 - models/best_model.pth
 - results/training_curves.png
-
-Inference utilities can also save:
-
 - results/confusion_matrix.png
+
+`results/confusion_matrix.png` is now generated automatically at the end of training from test-set predictions.
 
 ## Common Issues and Fixes
 
 1. Import errors for local modules
 - Ensure PYTHONPATH is set to project root before running scripts.
 
-2. Streamlit model load error
+2. Preprocessing split mismatch
+- `import_dataset()` returns `image_paths, labels` and `split_data()` supports both:
+	- `split_data(image_paths, labels)`
+	- `split_data(df)`
+
+3. Streamlit model load error
 - Confirm models/best_model.pth exists.
 
-3. OpenCV GUI errors in cloud/deployment
+4. OpenCV GUI errors in cloud/deployment
 - Use opencv-python-headless (already in requirements).
 
 ## Model Behavior Notes
