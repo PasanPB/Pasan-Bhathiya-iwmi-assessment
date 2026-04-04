@@ -77,16 +77,26 @@ def predict(image):
 # ------------------------
 # Chart
 # ------------------------
-def draw_probability_chart(probs):
-    fig, ax = plt.subplots()
+def draw_probability_chart(probs, class_names, top_k=3):
+    top_k = min(top_k, len(class_names))
+    top_indices = np.argsort(probs)[::-1][:top_k]
 
-    ax.bar(classes, probs)
+    top_labels = [class_names[i] for i in top_indices]
+    top_probs = probs[top_indices]
+
+    fig, ax = plt.subplots()
+    bars = ax.bar(top_labels, top_probs)
     ax.set_ylim(0, 1)
     ax.set_ylabel("Probability")
-    ax.set_title("Prediction Confidence")
+    ax.set_title(f"Top {top_k} Prediction Confidence")
 
-    for i, v in enumerate(probs):
-        ax.text(i, v + 0.02, f"{v*100:.1f}%", ha='center')
+    for bar, prob in zip(bars, top_probs):
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            prob + 0.02,
+            f"{prob * 100:.1f}%",
+            ha="center",
+        )
 
     return fig
 
@@ -129,8 +139,10 @@ if uploaded_file is not None:
             st.progress(min(max(confidence, 0.0), 1.0))
 
         st.write("")
-        st.subheader("Class Probabilities")
-        st.pyplot(draw_probability_chart(probs))
+        st.subheader("Top Predictions")
+        st.pyplot(draw_probability_chart(probs, classes, top_k=3))
+        if len(classes) < 3:
+            st.caption("Top-3 view requested; only 2 classes are available in this model.")
 
     except Exception as e:
         st.error(f"Error processing image: {e}")
